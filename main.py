@@ -2,10 +2,10 @@ import tkinter as tk
 from tkinter import colorchooser
 import sqlite3
 import random
-import time
 zzz=0
 winp1=0;winp2=0;roundd=0;p1=0;p2=0
 x=[]
+moving = False
 
 def new_map():#انشاء مصوفة فيهة الترتيب والبونصات
     x.clear()
@@ -21,108 +21,103 @@ def new_map():#انشاء مصوفة فيهة الترتيب والبونصات
         if ',' in x[i]:
             n,m=x[i].split(',')
             n=int(n);m=int(m)
+
             if(m==0):
                 x[i]=f'{n+1},+6'
             if(';' in x[n+m]):
                 x[i]=f' {n+1},+{m+1}'
-            if int(x[i].split(',')[1])>=0:
+            if m>0:
                 x[i]=f' {n+1},+{m}'
 new_map()
 
 
+def pons(old_p, new_p, name1, color1, p2, name2, color2, callback=None):
+    """تحريك اللاعب خانة بخانة، ثم استدعاء callback بعد انتهاء الحركة."""
 
-# def pons(p,num,name):
-#      block[p]['text']=name
-#      for i in range(p,p+num):
-#              chang= block[i]['text']
-#              block[i]['text']=block[i+1]['text']
-#              block[i+1]['text']=chang
-def pons(old_p, new_p, name1, color1, p2, name2, color2):#تغير اماكن الاعبين
+    def restore_block(position):
+        if position < 1 or position > 100:
+            return
 
-    if old_p > new_p:
-        def move_down(i):
-            if i < new_p:
-                return
+        # إذا كانت الخانة تحتوي اللاعب الآخر، لا نمسحه
+        if position == p2 and p2 > 0:
+            block[position]['text'] = name2
+            block[position]['bg'] = color2
+            return
 
-            # وضع اللاعب في الخانة الحالية
-            if i == p2:
-                block[i]['text'] = '(p1/p2)'
-                block[i]['bg'] = "#fff49d"
+        # إرجاع الخانة إلى شكلها الطبيعي
+        block[position]['text'] = x[position - 1]
+        if ',' in x[position - 1]:
+            effect = int(x[position - 1].split(',')[1])
+            if effect > 0:
+                block[position]['bg'] = "#2e5dc3"
+            elif effect < 0:
+                block[position]['bg'] = "#c32e2e"
             else:
-                block[i]['text'] = name1
-                block[i]['bg'] = color1
+                block[position]['bg'] = "#2e5dc3"
+        else:
+            block[position]['bg'] = "#adadad"
 
-            # إرجاع الخانة التي تركها اللاعب
-            old = i + 1
-            if old <= old_p:
-                if old == p2:
-                    block[old]['text'] = name2
-                    block[old]['bg'] = color2
-                else:
-                    block[old]['text'] = x[old - 1]
-                    if ',' in x[old - 1]:
-                        effect = int(x[old - 1].split(',')[1])
-                        if effect > 0:
-                            block[old]['bg'] = "#2e5dc3"
-                        elif effect < 0:
-                            block[old]['bg'] = "#c32e2e"
-                    else:
-                        block[old]['bg'] = "#adadad"
+    def put_player(position):
+        if position < 1 or position > 100:
+            return
 
-            if i > new_p:
-                xx.after(500,move_down,i - 1)
-        move_down(old_p - 1)
+        # اللاعبان في نفس الخانة
+        if position == p2 and p2 > 0:
+            block[position]['text'] = '(p1/p2)'
+            block[position]['bg'] = "#fff49d"
+        else:
+            block[position]['text'] = name1
+            block[position]['bg'] = color1
 
+    # لا توجد حركة
+    if old_p == new_p:
+        put_player(new_p)
+        if callback:
+            xx.after(300, lambda: callback(new_p))
+        return
 
-    elif old_p >= 1:
-            block[old_p]['text'] = x[old_p - 1]
-            block[old_p]['bg'] = "#adadad"
+    if new_p > old_p:
+        now = old_p
+        def move_forward():
+            nonlocal now
+            # إزالة اللاعب من الخانة الحالية أولاً
+            if now >= 1:
+                restore_block(now)
+            now += 1
+            put_player(now)
 
-            def move(i):
+            if now < new_p:
+                xx.after(500, move_forward)
+            elif callback:
+                xx.after(500, lambda: callback(new_p))
 
-                if i > new_p:
-                    return
+        move_forward()
 
-                # إرجاع الخانة السابقة
-                if i > old_p:
-                    if(i-1==p2):
-                        block[i - 1]['text'] = name2
-                        block[i - 1]['bg'] = color2
-                    else:
-                        block[i - 1]['text'] = x[i - 2]
-                        if ',' in x[i - 2]:
-                                effect = int(x[i - 2].split(',')[1])
-                                if effect > 0:
-                                    block[i - 1]['bg'] = "#2e5dc3"
-                                elif effect < 0:
-                                    block[i - 1]['bg'] = "#c32e2e"
-                        else:
-                            block[i - 1]['bg'] = "#adadad"
+    else:
+        now = old_p
+        def move_backward():
+            nonlocal now
+            if now >= 1:
+                restore_block(now)
+            now -= 1
+            put_player(now)
 
-                # وضع اللاعب في الخانة الحالية
-                if(i==p2):
-                    block[i]['text'] = '(p1/p2)'
-                    block[i]['bg'] = "#fff49d"
-                else:
-                    block[i]['text'] = name1
-                    block[i]['bg'] = color1
+            if now > new_p:
+                xx.after(500, move_backward)
+            elif callback:
+                xx.after(500, lambda: callback(new_p))
 
-                # الانتقال للخانة التالية بعد 0.5 ثانية
-                if i < new_p:
-                    xx.after(500, move, i + 1)
-
-            move(old_p + 1)
+        move_backward()
 
 
+def chaing(p1, name1, color1, p2=0, name2='(p2)', color2='green', bot_level=1, callback=None):
 
-def chaing(p1, name1, color1, p2, name2, color2, bot_level=1):#رمي الزار
     if bot_level == 1:
-            num = random.randint(1, 6)
-            new_p = p1 + num
-    
+        num = random.randint(1, 6)
+
     elif bot_level == 2:
+        possible = []
 
-        possible = []#نحفض الخانتات الموجبة
         for step in range(1, 7):
             position = p1 + step
             if position > 100:
@@ -130,52 +125,54 @@ def chaing(p1, name1, color1, p2, name2, color2, bot_level=1):#رمي الزار
 
             if ',' in x[position - 1]:
                 effect = int(x[position - 1].split(',')[1])
-                if effect > 0:# إذا كانت الخانة موجبة
+                if effect > 0:
                     possible.append(step)
-   
-        if possible:# إذا وجدت خانة موجبة
+
+        if possible:
             num = random.choice(possible)
-        else:# إذا لم اجد
-            num = random.randint(1, 6)
-        new_p = p1 + num
-
-    elif bot_level == 3:
-        positive = []#حفض الخانات الموجبة
-        safe = []#حفض الخانات السالبة
-
-        for step in range(1, 7):
-            position = p1 + step
-            if position > 100:
-                continue
-
-            if ',' in x[position - 1]:
-                effect = int(x[position - 1].split(',')[1])
-                if effect > 0:#موجبة ناخذهة
-                    positive.append(step)
-                elif effect < 0:# سالب نتجاهله
-                    continue
-            else:
-                safe.append(step)# خانة عادية بدون تأثير
-
-
-        if positive:#فحص الموجب واختياره
-            num = random.choice(positive)
-        elif safe:#العادية
-            num = random.choice(safe)
         else:
             num = random.randint(1, 6)
 
-        new_p = p1 + num
-        
+    elif bot_level == 3:
+        positive = []
+        safe = []
 
-            
+        for step in range(1, 7):
+            position = p1 + step
+            if position > 100:
+                continue
+
+            if ',' in x[position - 1]:
+                effect = int(x[position - 1].split(',')[1])
+                if effect > 0:
+                    positive.append(step)
+                elif effect < 0:
+                    continue
+            else:
+                safe.append(step)
+
+        if positive:
+            num = random.choice(positive)
+        elif safe:
+            num = random.choice(safe)
+        else:
+            num = random.randint(1, 6)
+    else:
+        num = random.randint(1, 6)
+
     lb3['text'] = num
 
+    new_p = p1 + num
+
+    # إذا تجاوز اللاعب الخانة 100، لا يتحرك
     if new_p > 100:
         lb4['text'] = 'over'
-        return p1
+        if callback:
+            xx.after(300, lambda: callback(p1))
+        return
 
     effect = 0
+
     if ',' in x[new_p - 1]:
         effect = int(x[new_p - 1].split(',')[1])
 
@@ -185,60 +182,119 @@ def chaing(p1, name1, color1, p2, name2, color2, bot_level=1):#رمي الزار
             lb4['text'] = f"you down, {effect}"
         else:
             lb4['text'] = ''
+    else:
+        lb4['text'] = ''
 
+    final_p = new_p + effect
 
-    pons(p1, new_p, name1, color1, p2, name2, color2)
-    new_p = new_p + effect
-    if new_p < 1:
-        new_p = 1
-    if new_p > 100:
+    if final_p < 1:
+        final_p = 1
+
+    if final_p > 100:
         lb4['text'] = 'over'
-        return p1
-    pons(p1, new_p, name1, color1, p2, name2, color2)
-    return new_p
+        if callback:
+            xx.after(300, lambda: callback(p1))
+        return
+
+    # لا يوجد تأثير: حركة واحدة فقط
+    if effect == 0:
+        pons(p1, new_p, name1, color1,p2, name2, color2,
+             callback=lambda pos: callback(pos) if callback else None)
+        return
+
+    # يوجد تأثير: ننتظر انتهاء حركة
+    def apply_effect(_):
+        # lambda يعني من يخلص الوكت فعل الدالة
+        xx.after(300, lambda: pons(new_p, final_p, name1, color1,p2, name2, color2,
+                                    callback=lambda pos: callback(pos) if callback else None))
+
+    pons(p1, new_p, name1, color1,p2, name2, color2,callback=apply_effect)
 
 
 def click():
-    global p1, p2, roundd, zzz
-    zzz+=1
-    # =========================
-    # Player 1
-    # =========================
-    if zzz % 2 == 1:
-        p1 = chaing(p1, '(p1)', settings['color_1'],p2,'(p2)',settings['color_2'])
-        lb5['text'] = f'playr(1) : {p1:02}'
-        if p1 == 100:
-            winer(1)
-        roundd += 1
-        lb0['text'] = f'the round is: {roundd}'
-        butn['bg']=settings['color_2']
-        # إذا كانت اللعبة لاعب واحد
-        if settings["players"] == 1:
-            xx.after(500, computer_turn)
+    global p1, p2, roundd, zzz, moving
 
-    elif(settings["players"] == 2):
-        p2 = chaing(p2, '(P2)', settings['color_2'],p1, '(p1)', settings['color_1'])
-        lb6['text'] = f'playr(1) : {p2:02}'
-        roundd += 1
-        lb0['text'] = f'the round is: {roundd}'
-        if p2 == 100:
-            winer(2)
-        butn['bg'] = settings['color_1']
+    # منع الضغط أثناء حركة اللاعب
+    if moving:
+        return
+
+    moving = True
+    butn.config(state='disabled')
+    zzz += 1
+
+    # دور اللاعب 1
+    if zzz % 2 == 1:
+
+        def player1_done(final_position):
+            global p1, roundd, moving
+
+            p1 = final_position
+            lb5['text'] = f'playr(1) : {p1:02}'
+
+            if p1 == 100:
+                moving = False
+                winer(1)
+                return
+
+            roundd += 1
+            lb0['text'] = f'the round is: {roundd}'
+            butn['bg'] = settings['color_2']
+
+            # دور الكمبيوتر
+            if settings["players"] == 1:
+                xx.after(500, computer_turn)
+            else:
+                moving = False
+                butn.config(state='normal')
+        chaing(p1, '(p1)', settings['color_1'],p2, '(p2)', settings['color_2'],callback=player1_done)
+
+    elif settings["players"] == 2:
+
+        def player2_done(final_position):
+            global p2, roundd, moving
+            p2 = final_position
+            lb6['text'] = f'playr(2) : {p2:02}'
+
+            if p2 == 100:
+                moving = False
+                winer(2)
+                return
+
+            roundd += 1
+            lb0['text'] = f'the round is: {roundd}'
+            butn['bg'] = settings['color_1']
+
+            moving = False
+            butn.config(state='normal')
+        chaing(p2, '(P2)', settings['color_2'],p1, '(p1)', settings['color_1'],callback=player2_done)
 
 # دور الكمبيوتر
 def computer_turn():
-    global p2, roundd, zzz
-    zzz+=1
+    global p2, roundd, zzz, moving
 
-    p2 = chaing(p2, '(PC)', settings['color_2'],settings['bot_level'])
+    # يبقى الزر معطلاً أثناء حركة الكمبيوتر
+    moving = True
+    butn.config(state='disabled')
+    zzz += 1
 
-    lb6['text'] = f'Computer : {p2:02}'
-    roundd += 1
-    lb0['text'] = f'the round is: {roundd}'
-    if p2 == 100:
-        winer(2)
-        return
-    butn['bg'] = settings['color_1']
+    def computer_done(final_position):
+        global p2, roundd, moving
+
+        p2 = final_position
+        lb6['text'] = f'Computer : {p2:02}'
+
+        if p2 == 100:
+            moving = False
+            winer(2)
+            return
+
+        roundd += 1
+        lb0['text'] = f'the round is: {roundd}'
+        butn['bg'] = settings['color_1']
+
+        moving = False
+        butn.config(state='normal')
+    chaing(p2, '(P2)', settings['color_2'],p1, '(p1)', settings['color_1'],settings['bot_level'],callback=computer_done)
 
 def re_zero():
     global p1, p2, roundd
@@ -261,7 +317,9 @@ def re_zero():
     update_map()
 
 def winer(player):
-     global winp1, winp2
+     global winp1, winp2, moving, zzz
+     moving = False
+     zzz=1   
      if player==1:
           winp1+=1
           lb1['text']=f'playr(1) is win : {winp1}'
