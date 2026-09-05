@@ -31,8 +31,7 @@ def new_map():#انشاء مصوفة فيهة الترتيب والبونصات
 new_map()
 
 
-def pons(old_p, new_p, name1, color1, p2, name2, color2, callback=None):
-    """تحريك اللاعب خانة بخانة، ثم استدعاء callback بعد انتهاء الحركة."""
+def pons(old_p, new_p, name1, color1, p2, name2, color2, callback=None):#الانميشين
 
     def restore_block(position):
         if position < 1 or position > 100:
@@ -209,6 +208,10 @@ def chaing(p1, name1, color1, p2=0, name2='(p2)', color2='green', bot_level=1, c
                                     callback=lambda pos: callback(pos) if callback else None))
 
     pons(p1, new_p, name1, color1,p2, name2, color2,callback=apply_effect)
+    if(','in x[effect+p1]):
+        pons(p1, new_p, name1, color1,p2, name2, color2,callback=apply_effect)
+
+
 
 
 def click():
@@ -246,6 +249,7 @@ def click():
             else:
                 moving = False
                 butn.config(state='normal')
+
         chaing(p1, '(p1)', settings['color_1'],p2, '(p2)', settings['color_2'],callback=player1_done)
 
     elif settings["players"] == 2:
@@ -319,7 +323,7 @@ def re_zero():
 def winer(player):
      global winp1, winp2, moving, zzz
      moving = False
-     zzz=1   
+     butn.config(state='normal')
      if player==1:
           winp1+=1
           lb1['text']=f'playr(1) is win : {winp1}'
