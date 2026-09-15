@@ -22,7 +22,7 @@ def test_name():
 #(p1,p2,x,name,block)
     assert check_name_chaing(25,0,5,'p1', block) == 'p1'
     assert check_name_chaing(25, 5, 1,'p2', block) == 'p2'
-    assert check_name_chaing(26, 32, 6, block) == 'p1/p2'
+    assert check_name_chaing(26, 32, 6, 'p1', block) == 'p1/p2'
 
 
 def test_color():
