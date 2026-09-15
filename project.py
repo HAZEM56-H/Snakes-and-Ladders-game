@@ -691,15 +691,17 @@ def check_name_chaing(p1,p2,x,name,block):
     return block[p]['text']
 
 def check_color_chaing(x,block):
-    position, effect = x.split(',')
-    position = int(position)
-    effect = int(effect)
+    if ',' in x:
+        position, effect = x.split(',')
+        position = int(position)
+        effect = int(effect)
 
-    if effect > 0:
-        block[position]['bg'] = "#2e5dc3"
-    elif effect < 0:
-        block[position]['bg'] = "#c32e2e"
+        if effect > 0:
+            block[position]['bg'] = "#2e5dc3"
+        elif effect < 0:
+            block[position]['bg'] = "#c32e2e"
     else:
+        position=int(x)
         block[position]['bg'] = "#adadad"
 
     return block[position]['bg']
