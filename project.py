@@ -7,36 +7,39 @@ winp1=0;winp2=0;roundd=0;p1=0;p2=0
 x=[]
 moving = False
 def main():
-    def inser():
-        global x
-        for i in range(100):
-            if ',' in x[i]:
-                n,m=x[i].split(',')
-                n=int(n);m=int(m)
-
-                if(m==0):
-                    x[i]=f'{n},+6'
-                if(';' in x[n+m]):
-                    m=random.randint(1, 5)
-                    x[i]=f' {n},+{m}'
-                if m>0:
-                    x[i]=f' {n},+{m}'
-
-    def new_map():#انشاء مصوفة فيهة الترتيب والبونصات
+    def new_map():
         x.clear()
+
         for i in range(100):
-            x.append(f"{i+1:02}")
-        for i in range(10,90,10):
-            n = random.randint(0, 9)
-            m = random.randint(0, 9)
-            x[i+n]=f'{i+n+1},{random.randint(-7,7)}'
-            x[i+m]=f'{i+m+1},{random.randint(-15,7)}'
-        inser()
-        inser()
-        
+            x.append(f"{i + 1:02}")
+
+        special_positions = [] # الخانات المييزة
+
+        for i in range(10, 90, 10):
+            for _ in range(2):
+                # اختيار خانة غير مستخدمة
+                while True:
+                    position = i + random.randint(0, 9)
+                    if position not in special_positions:
+                        break
+                
+                effect = random.randint(-7, 7)# اختيار التاثير
+                if effect == 0:
+                    effect = 6
+                
+                number = position + 1 # رقم الخانة الحقيقي
+                destination = number + effect
+
+                while (destination < 1 or destination > 100 or (destination - 1) in special_positions):
+                    effect = random.randint(-9, 3)
+                    if effect == 0:
+                        effect = 6
+                    destination = number + effect
+
+                x[position] = f"{number},{effect:+d}"
+                special_positions.append(position) # حفظ الخانة المميزة
+
     new_map()
-
-
     def pons(old_p, new_p, name1, color1, p2, name2, color2, callback=None):#الانميشين
 
         def restore_block(position):
@@ -214,8 +217,6 @@ def main():
                                         callback=lambda pos: callback(pos) if callback else None))
 
         pons(p1, new_p, name1, color1,p2, name2, color2,callback=apply_effect)
-        if(','in x[effect+p1]):
-            pons(p1, new_p, name1, color1,p2, name2, color2,callback=apply_effect)
 
 
 
