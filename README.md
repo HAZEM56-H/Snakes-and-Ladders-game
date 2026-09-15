@@ -15,7 +15,7 @@ Instead of using real snake and ladder images, the game uses colored tiles:
 The game board is generated randomly, which makes every new round different.
 
 #This clip features a simple explanation of the game along with some quick gameplay.
-https://www.youtube.com/watch?v=GWfhVu7xp2M
+https://youtu.be/VLkwi4Bx_9o?si=Q-wjLdI1dUldOnbl
 
 ## How to Run
 
