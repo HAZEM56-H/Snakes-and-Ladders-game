@@ -40,13 +40,14 @@ def main():
                 special_positions.append(position) # حفظ الخانة المميزة
 
     new_map()
-    def pons(old_p, new_p, name1, color1, p2, name2, color2, callback=None):#الانميشين
+
+    def pons(old_p, new_p, name1, color1, p2, name2, color2, callback=None):  # الانميشين
 
         def restore_block(position):
             if position < 1 or position > 100:
                 return
 
-            # إذا كانت الخانة تحتوي اللاعب الآخر، لا نمسحه
+            # إذا كانت الخانة تحتوي اللاعب الآخر لا نمسحه
             if position == p2 and p2 > 0:
                 block[position]['text'] = name2
                 block[position]['bg'] = color2
@@ -54,64 +55,73 @@ def main():
 
             # إرجاع الخانة إلى شكلها الطبيعي
             block[position]['text'] = x[position - 1]
-            if ',' in x[position - 1]:
-                effect = int(x[position - 1].split(',')[1])
-                if effect > 0:
-                    block[position]['bg'] = "#2e5dc3"
-                elif effect < 0:
-                    block[position]['bg'] = "#c32e2e"
-                else:
-                    block[position]['bg'] = "#2e5dc3"
-            else:
-                block[position]['bg'] = "#adadad"
+            block[position]['bg'] = check_color_chaing(x[position - 1])
 
         def put_player(position):
             if position < 1 or position > 100:
                 return
 
+            # استخدام check_name_chaing لتحديد اسم اللاعب
+            player_name = check_name_chaing(old_p,p2,position - old_p,name1,block)
+            block[position]['text'] = player_name
+            
             # اللاعبان في نفس الخانة
             if position == p2 and p2 > 0:
-                block[position]['text'] = '(p1/p2)'
                 block[position]['bg'] = "#fff49d"
             else:
-                block[position]['text'] = name1
                 block[position]['bg'] = color1
 
         # لا توجد حركة
         if old_p == new_p:
             put_player(new_p)
+
             if callback:
                 xx.after(300, lambda: callback(new_p))
+
             return
 
+        # الحركة إلى الأمام
         if new_p > old_p:
             now = old_p
+
             def move_forward():
                 nonlocal now
-                # إزالة اللاعب من الخانة الحالية أولاً
+
+                # إزالة اللاعب من الخانة الحالية
                 if now >= 1:
                     restore_block(now)
+
                 now += 1
+
+                # وضع اللاعب في الخانة الجديدة
                 put_player(now)
 
                 if now < new_p:
                     xx.after(500, move_forward)
+
                 elif callback:
                     xx.after(500, lambda: callback(new_p))
 
             move_forward()
 
+        # الحركة إلى الخلف
         else:
             now = old_p
+
             def move_backward():
                 nonlocal now
+
                 if now >= 1:
                     restore_block(now)
+
                 now -= 1
+
+                # وضع اللاعب في الخانة الجديدة
                 put_player(now)
 
                 if now > new_p:
                     xx.after(500, move_backward)
+
                 elif callback:
                     xx.after(500, lambda: callback(new_p))
 
@@ -170,8 +180,7 @@ def main():
 
         lb3['text'] = num
 
-        new_p = p1 + num
-
+        new_p = check_num_chaing(p1, num)
         # إذا تجاوز اللاعب الخانة 100، لا يتحرك
         if new_p > 100:
             lb4['text'] = 'over'
@@ -571,21 +580,16 @@ def main():
                 m2[j].add(block[i + ii + 1])
     new_map_block()
 
+    
     def update_map():
         for i in range(100):
             number = i + 1
+            block[number]['text'] =x[i]
+            block[number]['bg']=check_color_chaing(x[i])
 
-            block[number]['text'] = x[i]
-            block[number]['bg'] = "#adadad"
-
-            if ',' in x[i]:
-                effect = int(x[i].split(',')[1])
-
-                if effect >= 0:
-                    block[number]['bg'] = "#2e5dc3"
-
-                elif effect < 0:
-                    block[number]['bg'] = "#c32e2e"
+        
+            
+            
     update_map()
 
     m3=tk.PanedWindow(m)
@@ -672,40 +676,34 @@ def main():
 
 
 
-def check_num_chaing(p, x, block):
+def check_name_chaing(p1, p2, x, name, block):
+    p = p1 + x
+    if p == p2 and p2 > 0:
+        return 'p1/p2'
+    else:
+        return name
+
+def check_num_chaing(p,x):
     if x+p>100:
         p=p
     elif x+p<=0:
         p=1
     else:
         p=p+x
-    block[p]['text'] = p
-    return block[p]['text']
 
-def check_name_chaing(p1,p2,x,name,block):
-    p=p1+x
-    if(p==p2):
-        block[p]['text'] = 'p1/p2'
-    else:
-        block[p]['text'] = name
+    return p
 
-    return block[p]['text']
-
-def check_color_chaing(x,block):
+def check_color_chaing(x):
     if ',' in x:
-        position, effect = x.split(',')
-        position = int(position)
+        effect = x.split(',')[1]
         effect = int(effect)
 
         if effect > 0:
-            block[position]['bg'] = "#2e5dc3"
+            return  "#2e5dc3"
         elif effect < 0:
-            block[position]['bg'] = "#c32e2e"
+            return "#c32e2e"
     else:
-        position=int(x)
-        block[position]['bg'] = "#adadad"
-
-    return block[position]['bg']
+        return "#adadad"
 
 if __name__ == "__main__":
     main()
